@@ -8,36 +8,25 @@ import argparse  # Add argparse import
 
 def find_devices(device_name):
     """
-    Find the idVendor and idProduct of USB devices by name using ioreg.
+    Find the idVendor and idProduct of USB devices by name using pyusb.
     """
     try:
-        # Run ioreg to get USB device info
-        result = subprocess.run(
-            ["ioreg", "-p", "IOUSB", "-w0", "-l"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        if result.returncode != 0:
-            print(f"Error running ioreg: {result.stderr}")
-            return []
+        # Find all USB devices
+        devices = usb.core.find(find_all=True)
+        matching_devices = []
 
-        # Parse the output to find the devices
-        lines = result.stdout.splitlines()
-        devices = []
-        for i, line in enumerate(lines):
-            if device_name in line:
-                vendor_id, product_id = None, None
-                for subline in lines[i : i + 30]:  # Look in the next 30 lines for IDs
-                    if (not vendor_id) and ("idVendor" in subline):
-                        vendor_id = int(re.search(r"= (\d+)", subline).group(1))
-                    if (not product_id) and ("idProduct" in subline):
-                        product_id = int(re.search(r"= (\d+)", subline).group(1))
-                if vendor_id and product_id:
-                    devices.append((vendor_id, product_id))
+        for device in devices:
+            # Get the device's product strings
+            try:
+                product = usb.util.get_string(device, device.iProduct)
+            except usb.core.USBError:
+                continue
 
-        if devices:
-            return devices
+            if device_name in product:
+                matching_devices.append((device.idVendor, device.idProduct))
+
+        if matching_devices:
+            return matching_devices
         else:
             print(f"Device '{device_name}' not found.")
             return []
