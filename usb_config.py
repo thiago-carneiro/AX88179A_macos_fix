@@ -3,6 +3,7 @@ import re
 import sys
 import usb.core
 import usb.util
+import argparse  # Add argparse import
 
 
 def find_devices(device_name):
@@ -45,7 +46,7 @@ def find_devices(device_name):
         return []
 
 
-def configure_device(vendor_id, product_id):
+def configure_device(vendor_id, product_id, config_value=2):
     """
     Configure the USB device using pyusb.
     """
@@ -59,9 +60,9 @@ def configure_device(vendor_id, product_id):
             return False
 
         # Set the configuration
-        device.set_configuration(2)
+        device.set_configuration(config_value)
         print(
-            f"Successfully configured device with idVendor={vendor_id}, idProduct={product_id}."
+            f"Successfully configured device with idVendor={vendor_id}, idProduct={product_id} with config value={config_value}."
         )
         return True
 
@@ -71,18 +72,24 @@ def configure_device(vendor_id, product_id):
 
 
 def main():
-    # Set default device name
-    default_device_name = "AX88179A"
+    parser = argparse.ArgumentParser(description="Configure USB devices.")
+    parser.add_argument(
+        "device_name",
+        nargs="?",
+        default="AX88179A",
+        help="Name of the USB device to configure (default: AX88179A)",
+    )
+    parser.add_argument(
+        "config_value",
+        nargs="?",
+        type=int,
+        default=2,
+        help="Configuration value to set (default: 2)",
+    )
+    args = parser.parse_args()
 
-    if len(sys.argv) != 2:
-        print(f"Using default device name: '{default_device_name}'")
-        print(
-            "If you want to configure another device, specify its name as an argument:"
-        )
-        print("Usage: python3 usb_config.py <device_name>")
-        device_name = default_device_name
-    else:
-        device_name = sys.argv[1]
+    device_name = args.device_name
+    config_value = args.config_value
 
     # Find the devices
     devices = find_devices(device_name)
@@ -93,7 +100,7 @@ def main():
 
     # Configure each device
     for vendor_id, product_id in devices:
-        if not configure_device(vendor_id, product_id):
+        if not configure_device(vendor_id, product_id, config_value):
             sys.exit(1)
 
 
