@@ -1,22 +1,13 @@
 import subprocess
 import re
 import sys
-
-# Be sure to "pip install pyusb" first!
-try:
-    import usb.core
-    import usb.util
-except ImportError:
-    print(
-        "The 'pyusb' library is required to run this script. "
-        "Please install it by running:\n\n\tpip install pyusb\n"
-    )
-    sys.exit(1)
+import usb.core
+import usb.util
 
 
-def find_device(device_name):
+def find_devices(device_name):
     """
-    Find the idVendor and idProduct of a USB device by name using ioreg.
+    Find the idVendor and idProduct of USB devices by name using ioreg.
     """
     try:
         # Run ioreg to get USB device info
@@ -28,28 +19,30 @@ def find_device(device_name):
         )
         if result.returncode != 0:
             print(f"Error running ioreg: {result.stderr}")
-            return None, None
+            return []
 
-        # Parse the output to find the device
+        # Parse the output to find the devices
         lines = result.stdout.splitlines()
-        vendor_id, product_id = None, None
+        devices = []
         for i, line in enumerate(lines):
             if device_name in line:
+                vendor_id, product_id = None, None
                 for subline in lines[i : i + 30]:  # Look in the next 30 lines for IDs
                     if (not vendor_id) and ("idVendor" in subline):
                         vendor_id = int(re.search(r"= (\d+)", subline).group(1))
                     if (not product_id) and ("idProduct" in subline):
                         product_id = int(re.search(r"= (\d+)", subline).group(1))
-                break
+                if vendor_id and product_id:
+                    devices.append((vendor_id, product_id))
 
-        if vendor_id and product_id:
-            return vendor_id, product_id
+        if devices:
+            return devices
         else:
             print(f"Device '{device_name}' not found.")
-            return None, None
+            return []
     except Exception as e:
-        print(f"Error finding device: {e}")
-        return None, None
+        print(f"Error finding devices: {e}")
+        return []
 
 
 def configure_device(vendor_id, product_id):
@@ -66,7 +59,7 @@ def configure_device(vendor_id, product_id):
             return False
 
         # Set the configuration
-        device.set_configuration()
+        device.set_configuration(2)
         print(
             f"Successfully configured device with idVendor={vendor_id}, idProduct={product_id}."
         )
@@ -86,19 +79,22 @@ def main():
         print(
             "If you want to configure another device, specify its name as an argument:"
         )
-        print("Usage: python3 script.py <device_name>")
+        print("Usage: python3 usb_config.py <device_name>")
         device_name = default_device_name
     else:
         device_name = sys.argv[1]
 
-    # Find the device
-    vendor_id, product_id = find_device(device_name)
-    if not vendor_id or not product_id:
+    # Find the devices
+    devices = find_devices(device_name)
+    if not devices:
         sys.exit(1)
 
-    # Configure the device
-    if not configure_device(vendor_id, product_id):
-        sys.exit(1)
+    print(f"Found {len(devices)} devices with name '{device_name}':")
+
+    # Configure each device
+    for vendor_id, product_id in devices:
+        if not configure_device(vendor_id, product_id):
+            sys.exit(1)
 
 
 if __name__ == "__main__":
