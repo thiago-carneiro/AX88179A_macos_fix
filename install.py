@@ -14,14 +14,16 @@ def create_monitor_script(venv_path, device_name, config_value):
     monitoring_script_path = (
         f"{current_directory}/usb_config_monitor_{device_name}_{config_value}.sh"
     )
-    venv_activation = f"\nsource {venv_path}/bin/activate\n" if venv_path else ""
+    if venv_path:
+        venv_activation = f"\n    source {venv_path}/bin/activate"
+    else:
+        venv_activation = ""
     script_content = f"""#!/bin/bash
 
 DEVICE_NAME="{device_name}"
 CONFIG_VALUE="{config_value}"
 DEVICE_PRESENT=$(system_profiler SPUSBDataType | grep -i $DEVICE_NAME)
-{venv_activation}
-if [ ! -z "$DEVICE_PRESENT" ]; then
+if [ ! -z "$DEVICE_PRESENT" ]; then{venv_activation}
     python {current_directory}/usb_config.py $DEVICE_NAME $CONFIG_VALUE
 fi
 """
