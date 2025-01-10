@@ -1,7 +1,8 @@
 import sys
 import usb.core
 import usb.util
-import argparse  # Add argparse import
+import argparse
+from datetime import datetime
 
 
 def find_devices(device_name):
@@ -84,6 +85,11 @@ def main():
 
     device_name = args.device_name
     config_value = args.config_value
+
+    current_datetime = datetime.now()
+    print(
+        f"Starting {device_name} configuration at {current_datetime} with config value={config_value}."
+    )
 
     # Find the devices
     device_ids = find_devices(device_name)
