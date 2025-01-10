@@ -3,13 +3,11 @@ import subprocess
 import sys
 import argparse
 
-# Default values for the arguments
-DEFAULT_REPO_DIRECTORY = "src/AX88179A_macos_fix"
-DEFAULT_DEVICE_NAME = "AX88179A"
-
 
 def create_monitor_script(venv_path, device_name, config_value):
-    """Create the usb_config_monitor.sh script."""
+    """
+    Create the usb_config_monitor.sh script.
+    """
     current_directory = os.getcwd()
     monitoring_script_path = (
         f"{current_directory}/usb_config_monitor_{device_name}_{config_value}.sh"
@@ -40,7 +38,9 @@ fi
 
 
 def create_plist_file(script_path, device_name, config_value):
-    """Create the LaunchAgents plist file."""
+    """
+    Create the LaunchAgents plist file.
+    """
     home_path = os.environ.get("HOME")
     username = home_path.split(os.sep)[-1]
     plist_filename = (
@@ -103,7 +103,10 @@ def parse_arguments():
 
 
 def get_venv_path():
-    """Detect the virtual environment path, handling both Conda and Python's venv."""
+    """
+    Try to detect the virtual environment path, handling both Conda and Python's venv.
+    If no virtual environment is detected, ask the user if they want to continue without a venv.
+    """
     # First check if we're in a Conda environment
     conda_prefix = os.getenv("CONDA_PREFIX")
     if conda_prefix:
