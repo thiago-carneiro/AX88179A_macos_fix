@@ -1,5 +1,3 @@
-import subprocess
-import re
 import sys
 import usb.core
 import usb.util
@@ -15,6 +13,7 @@ def find_devices(device_name):
         devices = usb.core.find(find_all=True)
         matching_devices = []
 
+        # Get the device's system unique IDs
         for device in devices:
             # Get the device's product strings
             try:
@@ -23,35 +22,31 @@ def find_devices(device_name):
                 continue
 
             if device_name in product:
-                matching_devices.append((device.idVendor, device.idProduct))
+                matching_devices.append((device.bus, device.address))
 
-        if matching_devices:
-            return matching_devices
-        else:
-            print(f"Device '{device_name}' not found.")
-            return []
+        return matching_devices
     except Exception as e:
         print(f"Error finding devices: {e}")
         return []
 
 
-def configure_device(vendor_id, product_id, config_value=2):
+def configure_device(device_id, config_value=2):
     """
     Configure the USB device using pyusb.
     """
+    unique_id = f"{device_id[0]}-{device_id[1]}"
     try:
-        # Find the USB device
-        device = usb.core.find(idVendor=vendor_id, idProduct=product_id)
-        if not device:
-            print(
-                f"Device with idVendor={vendor_id}, idProduct={product_id} not found."
-            )
+        # Find the device
+        device = usb.core.find(bus=device_id[0], address=device_id[1])
+        if device is None:
+            print(f"Device not found at {unique_id}")
             return False
 
         # Set the configuration
         device.set_configuration(config_value)
+
         print(
-            f"Successfully configured device with idVendor={vendor_id}, idProduct={product_id} with config value={config_value}."
+            f"Successfully configured device {unique_id} with config value={config_value}."
         )
         return True
 
@@ -81,15 +76,16 @@ def main():
     config_value = args.config_value
 
     # Find the devices
-    devices = find_devices(device_name)
-    if not devices:
+    device_ids = find_devices(device_name)
+    if not device_ids:
+        print(f"No devices found with name {device_name}.")
         sys.exit(1)
 
-    print(f"Found {len(devices)} devices with name '{device_name}':")
+    print(f"Found {len(device_ids)} devices with name '{device_name}':")
 
     # Configure each device
-    for vendor_id, product_id in devices:
-        if not configure_device(vendor_id, product_id, config_value):
+    for device_id in device_ids:
+        if not configure_device(device_id, config_value):
             sys.exit(1)
 
 
