@@ -13,7 +13,10 @@ def create_monitor_script(venv_path, device_name, config_value):
         f"{current_directory}/usb_config_monitor_{device_name}_{config_value}.sh"
     )
     if venv_path:
-        venv_activation = f"\n    source {venv_path}/bin/activate"
+        venv_activation = f"""
+    if [ "$CONDA_PREFIX" != "{venv_path}" ] && [ "$VIRTUAL_ENV" != "{venv_path}" ]; then
+        source {venv_path}/bin/activate
+    fi"""
     else:
         venv_activation = ""
     script_content = f"""#!/bin/bash
