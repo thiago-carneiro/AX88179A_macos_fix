@@ -42,7 +42,17 @@ def configure_device(device_id, config_value=2):
             print(f"Device not found at {unique_id}")
             return False
 
-        # Set the configuration
+        # Get the current configuration value
+        current_config = device.get_active_configuration().bConfigurationValue
+        if current_config == config_value:
+            print(
+                f"Device {unique_id} already configured with config value={config_value}."
+            )
+            return True
+
+        print(f"Current configuration value for device {unique_id}: {current_config}")
+
+        # Set the new configuration value
         device.set_configuration(config_value)
 
         print(
