@@ -38,4 +38,4 @@ python usb_config.py [device_name] [config_value]
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the copyleft-next 0.3.1 License. See the [LICENSE](LICENSE) file for details.
